@@ -1,0 +1,17 @@
+# Ignore all
+*
+
+# Exceptions
+!.gitignore
+!.clang-format
+!.clang-tidy
+!Makefile
+!*.c
+!*.h
+!README.md
+!*.s
+!*.ld
+!*.json
+
+
+!*/

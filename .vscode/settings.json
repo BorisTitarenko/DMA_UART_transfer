@@ -1,0 +1,11 @@
+{
+    "toolchain.targetarch" :"arm-none-eabi-",
+    "toolchain.path" :"${env:HOME}/Software/Coding/toolchain/gcc-arm-none-eabi-10.3-2021.07",
+    "toolchain.bin": "${config:toolchain.path}/bin",
+    "files.associations": {
+        "stm32f401xx.h": "c",
+        "stm32f4xx.h": "c",
+        "main.h": "c",
+        "system_stm32f4xx.h": "c"
+    }
+}
