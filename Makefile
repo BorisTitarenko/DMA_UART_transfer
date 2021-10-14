@@ -2,7 +2,7 @@
 TARGET=main
 
 ### Linker Script
-LDFILE = stm32l412kb.ld
+LDFILE = stm32f401re.ld
 
 ### Device
 DEVICE = STM32L412xx
