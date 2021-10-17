@@ -47,7 +47,7 @@ CFLAGS += -specs=nosys.specs -Wl,-Map=${TARGET}.map  --specs=nano.specs
 # Remove unused sections
 CFLAGS += -Wl,--gc-sections  -ffunction-sections -fdata-sections
 # FPU
-CFLAGS += -mfpu=fpv4-sp-d16 -mfloat-abi=hard
+CFLAGS += -mfpu=fpv4-sp-d16 -mfloat-abi=hard -u_printf_float
 
 ### Rules
 .PHONY: all clean ${TARGET} ${TARGET}.elf ${TARGET}.bin flash size

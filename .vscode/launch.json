@@ -9,6 +9,7 @@
 			"cwd": "${workspaceRoot}",
 			"executable": "./main.elf",
 			"request": "launch",
+			"runToMain": true,
 			"showDevDebugOutput": true,
 			"type": "cortex-debug",
 			"servertype": "openocd",
@@ -16,21 +17,22 @@
 			"configFiles": [
                 "board/st_nucleo_f4.cfg"
 			],
-			"svdFile": "${HOME}/Projects/SVD/STM32F401.svd",
-			"preLaunchTask": "Make (Debug)"
+			"svdFile": "${workspaceRoot}/STM32F401.svd",
+			"preLaunchTask": "Make (Debug)",
 		},
 		{
 			"name": "GDB (Release)",
 			"cwd": "${workspaceRoot}",
 			"executable": "./main.elf",
 			"request": "launch",
+			"runToMain": true,
 			"type": "cortex-debug",
 			"servertype": "openocd",
 			"gdbPath": "${config:toolchain.bin}/${config:toolchain.targetarch}gdb",
 			"configFiles": [
 				"board/st_nucleo_f4.cfg"
 			],
-			"svdFile": "${HOME}/Projects/SVD/STM32F401.svd",
+			"svdFile": "${workspaceRoot}/STM32F401.svd",
 			"preLaunchTask": "Make (Release)"
 		}
 	]

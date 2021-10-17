@@ -3,6 +3,7 @@
 void SetDMA(DMAInit * DMA_init) {
 
     RCC->AHB1ENR |= RCC_AHB1ENR_DMA1EN;
+    RCC->AHB1ENR |= RCC_AHB1ENR_DMA2EN;
 
     DMA_Stream_TypeDef * DMA_Stream = DMA_init->DMA_Stream;
 
@@ -20,4 +21,5 @@ void SetDMA(DMAInit * DMA_init) {
     DMA_Stream->CR |= DMA_init->CR_PL;
     DMA_Stream->CR |= DMA_init->CR_MSIZE; 
     DMA_Stream->CR |= DMA_init->CR_PSIZE;
+    DMA_Stream->CR |= DMA_init->CR_CIRC;
 }

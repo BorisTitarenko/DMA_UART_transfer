@@ -39,9 +39,6 @@ void SetUART(void) {
      
 }
 
-volatile char data[] = "I'm data\n";
-
-
 
 void UART2_SendChar (uint8_t c)
 {
@@ -52,6 +49,60 @@ void UART2_SendChar (uint8_t c)
 void UART2_SendString (char *string)
 {
 	while (*string) UART2_SendChar (*string++);
+}
+
+void SetADC(void) {
+    RCC->APB2ENR |= RCC_APB2ENR_ADC1EN;
+    // ADC1->SQR1 = 0;
+    ADC1->CR1 = 0;
+    ADC2->CR2 = 0;
+    ADC->CCR |= ADC_CCR_ADCPRE_0;                   // ADC prescaler = 4, 10.5 MHz
+    ADC1->CR1 &= ~(ADC_CR1_RES_0);                  // resolution 12 bit
+
+    ADC1->CR2 |= ADC_CR2_EOCS;                      // Enable EOC after conversion
+    ADC1->CR1 |= ADC_CR1_EOCIE;
+
+    ADC1->CR2 &= ~(ADC_CR2_ALIGN);
+	ADC1->CR2 |= ADC_CR2_DMA;
+    ADC1->CR2 |= ADC_CR2_CONT;
+    ADC1->CR2 |= ADC_CR2_DDS;
+    //TODO: enable DMA
+
+    ADC1->SQR1 |= ADC_SQR1_L_0;                     // 1 channel
+    ADC1->SQR3 = ADC_SQR3_SQ1_4 | ADC_SQR3_SQ1_1;   // 18th channel
+    ADC1->SMPR1 |= (7<<24);
+
+    ADC->CCR |= ADC_CCR_TSVREFE;                    // enable temperature sensor
+    ADC1->CR2 |= ADC_CR2_ADON;                     // Enable ADC
+    uint32_t i = 0;
+    while(i < 100000) ++i;
+
+    NVIC_EnableIRQ(ADC_IRQn);
+    NVIC_SetPriority(ADC_IRQn, 0);
+    // minimum sampling time for TS = 17 ms
+}
+
+uint16_t data[10] = {0};
+
+void DMA2_Stream0_IRQHandler(void) {
+    DMA2->LIFCR |= DMA_LISR_TCIF0;
+    //UART2_SendString("DATA");
+    static int i = 0;
+    static char temp_str[10];
+    for (i = 0; i < 10; ++i){
+        sprintf(temp_str, "%u ", data[i]);
+        UART2_SendString(temp_str);
+    }
+    UART2_SendString("\n\r\n\r");
+
+}
+
+void ADC_IRQHandler(void) {
+    ADC1->SR = 0;
+    static char temp_str[10];
+    float temperature = (((3.3 / 4096) * (float)(ADC1->DR) - 0.76) / 0.0025) + 25;
+    sprintf(temp_str, "%.2f C\n\r", temperature);
+    UART2_SendString(temp_str);
 }
 
 
@@ -67,24 +118,52 @@ int main(void) {
     SetUART();
 
     DMAInit DMA_init = {0};
-    
+
     DMA_init.DMA_Stream = DMA1_Stream6;
     DMA_init.PAR = (uint32_t)&(USART2->DR);
     DMA_init.M0AR = (uint32_t)data;
     DMA_init.NDTR = sizeof(data) / sizeof(char);
-    DMA_init.CR_CHSEL = DMA_SxCR_CHSEL_2; //channel 4
+    DMA_init.CR_CHSEL = DMA_SxCR_CHSEL_2; // channel 4
     DMA_init.CR_MINC = DMA_SxCR_MINC;
     DMA_init.CR_PL = DMA_SxCR_PL_0;
     DMA_init.CR_DIR = DMA_SxCR_DIR_0;
+    DMA_init.CR_MSIZE = DMA_SxCR_MSIZE_0;
 
     SetDMA(&DMA_init);
 
+    DMAInit DMA_init2 = {0};
+    DMA_init2.DMA_Stream = DMA2_Stream0; // channel 0 by default
+    DMA_init2.CR_MINC = DMA_SxCR_MINC;
+    DMA_init2.PAR = (uint32_t)&(ADC1->DR);
+    DMA_init2.M0AR = (uint32_t)data;
+    DMA_init2.NDTR = sizeof(data) / sizeof(char);
+    DMA_init2.CR_CIRC = DMA_SxCR_CIRC;
+    DMA_init2.CR_MSIZE = DMA_SxCR_MSIZE_0;
+
+    SetDMA(&DMA_init2);
+
+    // DMA2_Stream0->CR |= DMA_SxCR_TCIE; // enable interrupt
+
+    NVIC_SetPriority(DMA2_Stream0_IRQn, 0);
+    NVIC_EnableIRQ(DMA2_Stream0_IRQn);
+
+    SetADC();
+
+    ADC1->SR = 0;
+    ADC1->CR2 |= ADC_CR2_SWSTART;
+
+    DMA2->LIFCR |= DMA_LISR_TCIF0;
+    DMA2_Stream0->CR |= DMA_SxCR_EN;
+
     volatile uint32_t i = 0;
+    for(i = 0; i < 8400000; ++i);
+    
+    char temp_str[10];
     while(1) {
         GPIOA->ODR ^= GPIO_ODR_ODR_5;
         for(i = 0; i < 8400000; ++i);
-
-        DMA1->HIFCR |= DMA_HIFCR_CTCIF6; // clear end transfer interrupt bit
-        DMA1_Stream6->CR |= DMA_SxCR_EN;
+        
+        //DMA1->HIFCR |= DMA_HIFCR_CTCIF6; // clear end transfer interrupt bit
+        //DMA1_Stream6->CR |= DMA_SxCR_EN;
     }
 }

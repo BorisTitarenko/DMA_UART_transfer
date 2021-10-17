@@ -16,6 +16,7 @@ typedef struct DMAInit {
     uint32_t CR_PL;
     uint32_t CR_MSIZE;
     uint32_t CR_PSIZE;
+    uint32_t CR_CIRC
 } DMAInit;
 
 
